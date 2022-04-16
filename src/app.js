@@ -6,6 +6,8 @@ import logger from 'morgan'
 import cors from 'cors'
 import admin from 'firebase-admin'
 import bodyParser from 'body-parser'
+import session from 'express-session'
+const FileStore = require('session-file-store')(session)
 
 import indexRouter from './routes/index'
 
@@ -22,18 +24,34 @@ export const storage = admin.storage().bucket()
 export const database = admin.database()
 
 app.use(cors())
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true }))
 
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'jade')
 
 app.use(logger('dev'))
 app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
+// app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
 
 app.use('/', indexRouter)
+
+app.use(
+  session({
+    secret: 'keyboard cat',
+    store: new FileStore(),
+    proxy: true,
+    resave: true,
+    saveUninitialized: true,
+  })
+)
+
+const user = {
+  id: '1',
+  email: 'furmanov.vladislav92@gmail.com',
+  password: '3373923Ц_12',
+}
 
 app.use((req, res, next) => {
   next(createError(404))

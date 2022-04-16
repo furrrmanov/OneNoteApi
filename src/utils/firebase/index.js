@@ -2,7 +2,8 @@ import firebase from 'firebase'
 import 'firebase/storage'
 global['XMLHttpRequest'] = require('xmlhttprequest').XMLHttpRequest
 import { v4 as uuidv4 } from 'uuid'
-const { format } = require('util')
+import format from 'util'
+import { tarnsformUserInfoData } from '../dataMappers'
 
 import { storage, database } from '../../app'
 
@@ -19,16 +20,15 @@ if (firebase.apps.length === 0) {
   firebase.initializeApp(firebaseConfig)
 }
 
-
 export default firebase
 
 export const singInWithEmailUsingFirebase = (data) => {
   return firebase
     .auth()
-    .signInWithEmailAndPassword(data.email, data.password)
+    .signInWithEmailAndPassword(data.username, data.password)
     .then((result) => {
       const { user } = result
-      return user
+      return tarnsformUserInfoData(user)
     })
     .catch((error) => {})
 }
@@ -86,10 +86,12 @@ export const uploadFileToFirebaseStorage = async (value) => {
   const file = value
 
   if (file) {
-    return upload(file).then((response) => {
-      const data = response
-      return data
-    })
+    return upload(file)
+      .then((response) => {
+        const data = response
+        return data
+      })
+      .catch((error) => error)
   }
 }
 
@@ -118,9 +120,8 @@ const upload = (file) => {
     })
 
     blobStream.on('finish', () => {
-      const url = format(
-        `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${fileUpload.name}?alt=media&token=${token}`
-      )
+      const url = `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${fileUpload.name}?alt=media&token=${token}`
+      console.log(url)
       resolve({ imgUrl: url, imgName: file.originalname })
     })
 
